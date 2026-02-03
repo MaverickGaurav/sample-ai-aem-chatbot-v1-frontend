@@ -2,9 +2,17 @@
 import React from 'react';
 import { Settings, Moon, Sun, Sparkles } from 'lucide-react';
 
-export default function Header({ darkMode, setDarkMode, showSettings, setShowSettings, theme }) {
+export default function Header({ darkMode, setDarkMode, showSettings, setShowSettings, theme, currentTheme, setCurrentTheme }) {
+  const handleThemeToggle = () => {
+    if (currentTheme === 'dark') {
+      setCurrentTheme('light');
+    } else {
+      setCurrentTheme('dark');
+    }
+  };
+
   return (
-    <div className={`${theme.card} border-b sticky top-0 z-50 shadow-lg`}>
+    <div className={`${theme.card} border-b sticky top-0 z-50 shadow-lg backdrop-blur-xl`}>
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -12,7 +20,7 @@ export default function Header({ darkMode, setDarkMode, showSettings, setShowSet
           </div>
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-              A Demo bot!
+              Interactive Assistive Interface!
             </h1>
             <p className={`text-sm ${theme.subtext}`}>AI-Powered AEM Analysis & Compliance</p>
           </div>
@@ -26,7 +34,7 @@ export default function Header({ darkMode, setDarkMode, showSettings, setShowSet
             <Settings className="w-5 h-5" />
           </button>
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={setCurrentTheme ? handleThemeToggle : () => setDarkMode(!darkMode)}
             className={`p-2.5 rounded-lg ${theme.input} border transition-all hover:scale-105 active:scale-95`}
             aria-label="Toggle theme"
           >

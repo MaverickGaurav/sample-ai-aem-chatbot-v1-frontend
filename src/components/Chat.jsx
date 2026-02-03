@@ -1,9 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Download, RotateCcw, Bot, User } from 'lucide-react';
+import { Send, Download, RotateCcw, Bot, User, Globe } from 'lucide-react';
 
 export default function Chat({ messages, loading, onSendMessage, onClearChat, onExportChat, theme, placeholder = "Type your message...", showWebIndicator = false }) {
   const [input, setInput] = useState('');
+  const [searchEngine, setSearchEngine] = useState('google');
   const messagesEndRef = useRef(null);
+
+  const searchEngines = [
+    { id: 'google', name: 'Google' },
+    { id: 'bing', name: 'Bing' },
+    { id: 'duckduckgo', name: 'DuckDuckGo' },
+    { id: 'brave', name: 'Brave Search' }
+  ];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -18,7 +26,23 @@ export default function Chat({ messages, loading, onSendMessage, onClearChat, on
   return (
     <div className={`${theme.card} border rounded-2xl shadow-lg overflow-hidden`}>
       <div className="p-4 border-b border-current/10 flex justify-between items-center">
-        <h3 className="font-semibold">Conversation</h3>
+        <div className="flex items-center gap-3">
+          <h3 className="font-semibold">Conversation</h3>
+          {showWebIndicator && (
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-500" />
+              <select
+                value={searchEngine}
+                onChange={(e) => setSearchEngine(e.target.value)}
+                className={`px-3 py-1 rounded-lg ${theme.input} border text-sm`}
+              >
+                {searchEngines.map(engine => (
+                  <option key={engine.id} value={engine.id}>{engine.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
           <button onClick={onClearChat} className={`px-3 py-1.5 rounded-lg ${theme.input} border text-sm flex items-center gap-2`}>
             <RotateCcw className="w-4 h-4" />

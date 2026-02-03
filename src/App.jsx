@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import ModeSelector from './components/ModeSelector';
 import Chat from './components/Chat';
@@ -6,12 +6,20 @@ import FileUpload from './components/FileUpload';
 import AEMPagePicker from './components/AEMPagePicker';
 import ComplianceReport from './components/ComplianceReport';
 import SettingsPanel from './components/SettingsPanel';
+import ThemeSelector from './components/ThemeSelector';
+import ImageGeneration from './components/ImageGeneration';
+import AssetBrowser from './components/AssetBrowser';
+import TagManager from './components/TagManager';
+import WorkflowManager from './components/WorkflowManager';
+import LivePreview from './components/LivePreview';
+import VersionComparison from './components/VersionComparison';
 import { useChat } from './hooks/useChat';
 import { useAEM } from './hooks/useAEM';
 import { CHAT_MODES } from './utils/constants';
+import themes from './themes';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState('aurora');
   const [showSettings, setShowSettings] = useState(false);
   const [currentMode, setCurrentMode] = useState(CHAT_MODES.CHAT);
   const [settings, setSettings] = useState({
@@ -20,6 +28,7 @@ function App() {
     aemHost: 'http://localhost:4502',
     apiUrl: 'http://localhost:8000'
   });
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
   // Chat hook
   const {
@@ -44,14 +53,7 @@ function App() {
     clearResults
   } = useAEM(settings);
 
-  const theme = {
-    bg: darkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-100',
-    card: darkMode ? 'bg-slate-800/50 backdrop-blur-xl border-slate-700' : 'bg-white/80 backdrop-blur-xl border-slate-200',
-    text: darkMode ? 'text-slate-100' : 'text-slate-900',
-    subtext: darkMode ? 'text-slate-400' : 'text-slate-600',
-    input: darkMode ? 'bg-slate-700/50 border-slate-600 text-slate-100 placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400',
-    button: darkMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-500 hover:bg-blue-600'
-  };
+  const theme = themes[currentTheme] || themes.dark;
 
   const handleModeChange = (mode) => {
     setCurrentMode(mode);
@@ -75,19 +77,30 @@ function App() {
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text} transition-all duration-300`}>
       <Header
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        darkMode={currentTheme === 'dark'}
+        setDarkMode={(isDark) => setCurrentTheme(isDark ? 'dark' : 'light')}
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
         showSettings={showSettings}
         setShowSettings={setShowSettings}
         theme={theme}
       />
 
       {showSettings && (
-        <SettingsPanel
-          settings={settings}
-          setSettings={setSettings}
-          theme={theme}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-start justify-end pt-20 p-6">
+          <div className="w-full max-w-md space-y-4">
+            <SettingsPanel
+              settings={settings}
+              setSettings={setSettings}
+              theme={theme}
+            />
+            <ThemeSelector
+              currentTheme={currentTheme}
+              onThemeChange={setCurrentTheme}
+              theme={theme}
+            />
+          </div>
+        </div>
       )}
 
       <div className="max-w-7xl mx-auto px-6 py-6">
@@ -110,23 +123,10 @@ function App() {
           )}
 
           {currentMode === CHAT_MODES.FILE && (
-            <div>
-              <FileUpload
-                settings={settings}
-                theme={theme}
-              />
-              <div className="mt-6">
-                <Chat
-                  messages={messages}
-                  loading={loading}
-                  onSendMessage={handleSendMessage}
-                  onClearChat={clearChat}
-                  onExportChat={exportChat}
-                  theme={theme}
-                  placeholder="Ask a question about your uploaded file..."
-                />
-              </div>
-            </div>
+            <FileUpload
+              settings={settings}
+              theme={theme}
+            />
           )}
 
           {currentMode === CHAT_MODES.WEB && (
@@ -137,23 +137,42 @@ function App() {
               onClearChat={clearChat}
               onExportChat={exportChat}
               theme={theme}
-              placeholder="Search the web for information..."
-              showWebIndicator={true}
+              placeholder="Ask a question about web content..."
             />
           )}
 
           {currentMode === CHAT_MODES.AEM && (
             <div className="space-y-6">
-              <AEMPagePicker
-                pages={pages}
-                selectedPages={selectedPages}
-                loadingPages={loadingPages}
-                loadingCompliance={loadingCompliance}
-                onQueryPages={queryPages}
-                onSelectPage={selectPage}
-                onRunCompliance={runComplianceCheck}
-                theme={theme}
-              />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AEMPagePicker
+                  pages={pages}
+                  selectedPages={selectedPages}
+                  loadingPages={loadingPages}
+                  loadingCompliance={loadingCompliance}
+                  onQueryPages={queryPages}
+                  onSelectPage={selectPage}
+                  onRunCompliance={runComplianceCheck}
+                  theme={theme}
+                />
+
+                <ImageGeneration
+                  settings={settings}
+                  theme={theme}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AssetBrowser
+                  theme={theme}
+                  settings={settings}
+                  onSelectAsset={setSelectedAsset}
+                />
+
+                <LivePreview
+                  pagePath={selectedAsset?.path}
+                  theme={theme}
+                />
+              </div>
 
               {complianceResults && complianceResults.length > 0 && (
                 <ComplianceReport
@@ -164,17 +183,18 @@ function App() {
                 />
               )}
 
-              <div className="mt-6">
-                <Chat
-                  messages={messages}
-                  loading={loading}
-                  onSendMessage={handleSendMessage}
-                  onClearChat={clearChat}
-                  onExportChat={exportChat}
-                  theme={theme}
-                  placeholder="Ask me anything about AEM..."
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <TagManager theme={theme} />
+                <WorkflowManager 
+                  theme={theme} 
+                  selectedPages={selectedPages}
                 />
               </div>
+
+              <VersionComparison
+                asset={selectedAsset}
+                theme={theme}
+              />
             </div>
           )}
         </div>

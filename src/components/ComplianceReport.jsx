@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Download, X } from 'lucide-react';
 
 export default function ComplianceReport({ results, onExport, onClear, theme }) {
   const [selectedResult, setSelectedResult] = useState(null);
+  const [exportFormat, setExportFormat] = useState('csv');
+  const [exporting, setExporting] = useState(false);
 
   if (!results || results.length === 0) return null;
 
@@ -17,27 +19,45 @@ export default function ComplianceReport({ results, onExport, onClear, theme }) 
     return colors[grade] || 'bg-gray-500';
   };
 
+  const handleExport = async (format) => {
+    setExporting(true);
+    setExportFormat(format);
+    try {
+      await onExport(format);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={`${theme.card} border rounded-2xl p-6 shadow-lg`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Compliance Results</h3>
         <div className="flex gap-2">
           <button 
-            onClick={() => onExport('csv')} 
-            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm`}
+            onClick={() => handleExport('csv')}
+            disabled={exporting}
+            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm flex items-center gap-2 hover:bg-green-500/10 disabled:opacity-50`}
           >
-            Export CSV
+            <Download className="w-4 h-4" />
+            {exporting && exportFormat === 'csv' ? 'Exporting...' : 'Export CSV'}
           </button>
           <button 
-            onClick={() => onExport('pdf')} 
-            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm`}
+            onClick={() => handleExport('pdf')}
+            disabled={exporting}
+            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm flex items-center gap-2 hover:bg-red-500/10 disabled:opacity-50`}
           >
-            Export PDF
+            <Download className="w-4 h-4" />
+            {exporting && exportFormat === 'pdf' ? 'Exporting...' : 'Export PDF'}
           </button>
           <button 
             onClick={onClear} 
-            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm`}
+            className={`px-4 py-2 rounded-lg ${theme.input} border text-sm flex items-center gap-2 hover:bg-red-500/10`}
           >
+            <X className="w-4 h-4" />
             Clear
           </button>
         </div>
@@ -79,7 +99,7 @@ export default function ComplianceReport({ results, onExport, onClear, theme }) 
       </div>
 
       {selectedResult && (
-        <div className="mt-6 p-6 rounded-xl border">
+        <div className="mt-4 p-4 rounded-xl border">
           <h4 className="text-lg font-semibold mb-4">{selectedResult.page_title}</h4>
           {selectedResult.categories.map((category, idx) => (
             <div key={idx} className="mb-4">
